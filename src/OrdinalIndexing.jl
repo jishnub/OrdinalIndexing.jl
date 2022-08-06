@@ -108,9 +108,9 @@ function firstlastinds(ax, indrange)
 	(inda, indb)
 end
 
-function Base.to_indices(A, inds::Tuple{Any}, I::Tuple{MixedOrdinalUnitRange})
+function Base.to_indices(A, inds::Tuple{Any, Vararg}, I::Tuple{MixedOrdinalUnitRange, Vararg})
 	inda, indb = firstlastinds(first(inds), first(I))
-	(inda:indb,)
+	(inda:indb, to_indices(A, Base.tail(inds), Base.tail(I))...)
 end
 
 struct MixedOrdinalStepRange{A,S,B}
@@ -137,10 +137,10 @@ function Base.:(:)(a::OrdinalIntOrReal, step::OrdinalIntOrReal, b::OrdinalIntOrR
 	MixedOrdinalStepRange(a, step, b)
 end
 
-function Base.to_indices(A, inds::Tuple{Any}, I::Tuple{MixedOrdinalStepRange})
+function Base.to_indices(A, inds::Tuple{Any, Vararg}, I::Tuple{MixedOrdinalStepRange, Vararg})
 	indrange = first(I)
 	inda, indb = firstlastinds(first(inds), indrange)
-	(inda:Integer(step(indrange)):indb,)
+	(inda:Integer(step(indrange)):indb, to_indices(A, Base.tail(inds), Base.tail(I))...)
 end
 
 const OrdinalRangeTypes{T} = Union{OrdinalUnitRange{T}, OrdinalStepRange{T}}
