@@ -18,6 +18,8 @@ using Test
     end
     @testset "indexing" begin
         function test_linear(a)
+            @test_throws BoundsError a[0*th]
+            @test_throws BoundsError a[(length(a)+1)*th]
             for ord in 1:length(a)
                 index = ord - 1 + firstindex(a)
                 @test a[ord*th] == a[index]
@@ -56,11 +58,13 @@ using Test
             end
         end
         @testset "OffsetArrays" begin
-            @testset for sz in [(5,), (5, 5), (5, 5, 3)]
+            @testset for sz in Any[(5,), (5, 5), (5, 5, 3)]
                 a = rand(sz...)
-                b = OffsetArray(a, [2 for _ in 1:ndims(a)]...)
-                test_linear(b)
-                test_cart(b)
+                @testset for offsets in Any[ntuple(_->20, ndims(a)), ntuple(_->-100, ndims(a))]
+                    b = OffsetArray(a, offsets)
+                    test_linear(b)
+                    test_cart(b)
+                end
             end
         end
     end
