@@ -32,8 +32,8 @@ Base.oneunit(::Type{OrdinalSuffixedInteger{T}}) where {T} = OrdinalSuffixedInteg
 function Base.promote_rule(::Type{OrdinalSuffixedInteger{T1}}, ::Type{OrdinalSuffixedInteger{T2}}) where {T1,T2}
 	OrdinalSuffixedInteger{promote_type(T1, T2)}
 end
-function Base.promote_rule(::Type{A}, ::Type{OrdinalSuffixedInteger{T}}) where {A<:Integer, T<:Integer}
-	OrdinalSuffixedInteger{promote_type(A, T)}
+function Base.convert(::Type{OrdinalSuffixedInteger{T}}, O::OrdinalSuffixedInteger) where {T}
+	OrdinalSuffixedInteger{T}(Integer(O))
 end
 
 const OrdinalIntOrInt = Union{OrdinalSuffixedInteger, Integer}
@@ -155,6 +155,10 @@ function Base.iterate(O::OrdinalRangeTypes{T}, i) where {T}
 	i == last(O) && return nothing
 	next = convert(T, i + step(O))
 	(next, next)
+end
+
+function Base.checkindex(::Type{Bool}, inds::AbstractUnitRange, s::OrdinalSuffixedInteger)
+	1 <= Integer(s) <= length(inds)
 end
 
 function Base.show(io::IO, O::OrdinalSuffixedInteger)
