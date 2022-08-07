@@ -36,6 +36,8 @@ using Test
             end
         end
         function test_cart(a)
+            @test_throws BoundsError a[ntuple(_ -> 0th, ndims(a))...]
+            @test_throws BoundsError a[ntuple(n -> (size(a, n) + 1) * th, ndims(a))...]
             for ord in 1:size(a, 1), ind2 in CartesianIndices(axes(a)[2:end])
                 index = ord - 1 + firstindex(a, 1)
                 @test a[ord*th, ind2] == a[index, ind2]
@@ -53,6 +55,10 @@ using Test
                 inds = ords .- 1 .+ first.(axes(a))
                 @test a[(ords .* th)...] == a[inds...]
             end
+            ord = [1st, 2nd]
+            ordinds = ntuple(x -> ord, ndims(a))
+            inds = ntuple(n -> Int.(ord) .- 1 .+ firstindex(a, n), ndims(a))
+            @test a[ordinds...] == a[inds...]
         end
         @testset "arrays" begin
             @testset for sz in [(5,), (5, 5), (5, 5, 3)]
