@@ -16,6 +16,10 @@ using Test
         @test [2nd, true*th] == [2nd, 1st]
         @test [2nd, 3] == Any[2nd, 3]
     end
+    @testset "broadcasting" begin
+        @test (1:3) * th == 1st:3nd
+        @test (1:2:3) * th == 1st:2:3nd
+    end
     @testset "indexing" begin
         function test_linear(a)
             @test_throws BoundsError a[0*th]

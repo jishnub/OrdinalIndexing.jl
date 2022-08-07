@@ -2,7 +2,7 @@ module OrdinalIndexing
 
 export st, nd, rd, th, OrdinalSuffixedInteger
 
-struct OrdinalSuffixedInteger{T<:Integer}
+struct OrdinalSuffixedInteger{T<:Integer} <: Number
 	n :: T
 
 	function OrdinalSuffixedInteger{T}(n::Integer) where {T<:Integer}
@@ -55,12 +55,6 @@ function Base.to_indices(A, inds::Tuple{Any,Vararg}, I::Tuple{OrdinalSuffixedInt
 	(Integer(first(I)) + first(first(inds)) - 1, to_indices(A, indsrest, Irest)...)
 end
 
-# make OrdinalSuffixedInteger behave like a number
-Base.length(O::OrdinalSuffixedInteger) = 1
-Base.iterate(O::OrdinalSuffixedInteger) = (O, nothing)
-Base.iterate(O::OrdinalSuffixedInteger, ::Any) = nothing
-Base.broadcastable(O::OrdinalSuffixedInteger) = Ref(O)
-
 ##########################################################################
 
 struct MixedOrdinalUnitRange{A,B}
@@ -91,11 +85,14 @@ function Base.:(:)(a::OrdinalIntOrReal, b::OrdinalIntOrReal)
 	MixedOrdinalUnitRange(a, b)
 end
 
+# OrdinalUnitRange behaves like a UnitRange{<:OrdinalSuffixedInteger}
 const OrdinalUnitRange{T<:OrdinalSuffixedInteger} = MixedOrdinalUnitRange{T,T}
 
 Base.first(O::MixedOrdinalUnitRange) = O.a
 Base.last(O::MixedOrdinalUnitRange) = O.b
 Base.step(O::OrdinalUnitRange{T}) where {T} = oneunit(T)
+Base.length(O::OrdinalUnitRange) = Integer(O.b + oneunit(O.b) - O.a)
+Base.size(O::OrdinalUnitRange) = (length(O),)
 
 function firstlastinds(ax, indrange)
 	a = indrange.a
@@ -128,7 +125,13 @@ Base.first(O::MixedOrdinalStepRange) = O.a
 Base.last(O::MixedOrdinalStepRange) = O.b
 Base.step(M::MixedOrdinalStepRange) = M.s
 
+# OrdinalStepRange behaves like a StepRange{<:OrdinalSuffixedInteger}
 const OrdinalStepRange{O<:OrdinalSuffixedInteger} = MixedOrdinalStepRange{O,O}
+const OrdinalRangeTypes{T} = Union{OrdinalUnitRange{T}, OrdinalStepRange{T}}
+
+Base.eltype(O::OrdinalRangeTypes{T}) where {T} = T
+Base.length(O::OrdinalStepRange) = length(Integer(O.a):Integer(O.s):Integer(O.b))
+Base.size(O::OrdinalStepRange) = (length(O),)
 
 function Base.:(:)(a::OrdinalIntOrReal, step::OrdinalIntOrReal, b::OrdinalIntOrReal)
 	MixedOrdinalStepRange(a, step, b)
@@ -140,11 +143,6 @@ function Base.to_indices(A, inds::Tuple{Any, Vararg}, I::Tuple{MixedOrdinalStepR
 	(inda:Integer(step(indrange)):indb, to_indices(A, Base.tail(inds), Base.tail(I))...)
 end
 
-const OrdinalRangeTypes{T} = Union{OrdinalUnitRange{T}, OrdinalStepRange{T}}
-
-Base.eltype(O::OrdinalRangeTypes{T}) where {T} = T
-Base.length(O::OrdinalUnitRange) = Integer(O.b + oneunit(O.b) - O.a)
-Base.length(O::OrdinalStepRange) = length(Integer(O.a):Integer(O.s):Integer(O.b))
 
 Base.isempty(O::OrdinalRangeTypes) = length(O) == 0
 Base.iterate(O::OrdinalRangeTypes) = isempty(O) ? nothing : (first(O), first(O))
@@ -175,5 +173,12 @@ end
 
 Base.show(io::IO, M::MixedOrdinalUnitRange) = print(io, M.a, ":", M.b)
 Base.show(io::IO, M::MixedOrdinalStepRange) = print(io, M.a, ":", step(M), ":", M.b)
+
+function Broadcast.broadcasted(::Broadcast.DefaultArrayStyle{1}, ::typeof(*), r::AbstractUnitRange, t::OrdinalSuffixedInteger)
+	MixedOrdinalUnitRange(first(r)*t, last(r)*t)
+end
+function Broadcast.broadcasted(::Broadcast.DefaultArrayStyle{1}, ::typeof(*), r::AbstractRange, t::OrdinalSuffixedInteger)
+	MixedOrdinalStepRange(first(r)*t, step(r), last(r)*t)
+end
 
 end
