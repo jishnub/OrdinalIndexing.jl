@@ -143,6 +143,13 @@ function Base.to_indices(A, inds::Tuple{Any, Vararg}, I::Tuple{MixedOrdinalStepR
 	(inda:Integer(step(indrange)):indb, to_indices(A, Base.tail(inds), Base.tail(I))...)
 end
 
+# specialize getindex for ranges to avoid collecting
+function Base.getindex(x::AbstractRange, i::Union{MixedOrdinalUnitRange, MixedOrdinalStepRange})
+	getindex(x, to_indices(x, (i,))...)
+end
+function Base.view(x::AbstractRange, i::Union{MixedOrdinalUnitRange, MixedOrdinalStepRange})
+	getindex(x, to_indices(x, (i,))...)
+end
 
 Base.isempty(O::OrdinalRangeTypes) = length(O) == 0
 Base.iterate(O::OrdinalRangeTypes) = isempty(O) ? nothing : (first(O), first(O))
