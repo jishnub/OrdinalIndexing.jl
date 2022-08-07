@@ -23,18 +23,15 @@ OrdinalSuffixedInteger{T}(O::OrdinalSuffixedInteger{U}) where {T<:Integer,U<:Int
 OrdinalSuffixedInteger(O::OrdinalSuffixedInteger) = O
 OrdinalSuffixedInteger{T}(O::OrdinalSuffixedInteger{T}) where {T<:Integer} = O
 
+function Base.convert(::Type{OrdinalSuffixedInteger{T}}, O::OrdinalSuffixedInteger) where {T}
+	OrdinalSuffixedInteger{T}(Integer(O))
+end
+
 Base.Integer(a::OrdinalSuffixedInteger) = a.n
 Base.Int(a::OrdinalSuffixedInteger) = Int(a.n)
 
 Base.oneunit(O::OrdinalSuffixedInteger) = OrdinalSuffixedInteger(oneunit(_eltype(O)))
 Base.oneunit(::Type{OrdinalSuffixedInteger{T}}) where {T} = OrdinalSuffixedInteger(oneunit(T))
-
-function Base.promote_rule(::Type{OrdinalSuffixedInteger{T1}}, ::Type{OrdinalSuffixedInteger{T2}}) where {T1,T2}
-	OrdinalSuffixedInteger{promote_type(T1, T2)}
-end
-function Base.convert(::Type{OrdinalSuffixedInteger{T}}, O::OrdinalSuffixedInteger) where {T}
-	OrdinalSuffixedInteger{T}(Integer(O))
-end
 
 const OrdinalIntOrInt = Union{OrdinalSuffixedInteger, Integer}
 const OrdinalIntOrReal = Union{OrdinalSuffixedInteger, Real}
